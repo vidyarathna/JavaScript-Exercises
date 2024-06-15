@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Coin Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    #gameCanvas {
+        border: 1px solid #000;
+        margin: 20px auto;
+        cursor: none;
+    }
+    #gameInfo {
+        margin-top: 10px;
+        font-size: 1.2rem;
+    }
+    .red-indicator {
+        color: red;
+        font-weight: bold;
+    }
+    .game-over {
+        color: red;
+        font-size: 24px;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+    <h1>Catch the Coin Game</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="gameInfo">
+        <div id="gameInstructions">
+            <h2>Game Instructions</h2>
+            <p>Move your character to catch falling coins and avoid obstacles.</p>
+            <p>Score points by catching coins. Your health decreases if you hit obstacles.</p>
+            <p>Your game ends when your health drops to zero.</p>
+        </div>
+        <p>Score: <span id="score">0</span></p>
+        <p>Health: <span id="health">3</span></p>
+        <p id="gameStatus"></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            width: 50,
+            height: 50,
+            speed: 5
+        };
+
+        const coin = {
+            x: 0,
+            y: 0,
+            width: 30,
+            height: 30,
+            speed: 2
+        };
+
+        const obstacle = {
+            x: 0,
+            y: 0,
+            width: 50,
+            height: 20,
+            speed: 3
+        };
+
+        let score = 0;
+        let health = 3;
+        let gameRunning = true;
+
+        function initialize() {
+            canvas.addEventListener('mousemove', movePlayer);
+
+            setInterval(gameLoop, 1000 / 30); // 30 FPS
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            update();
+            draw();
+        }
+
+        function update() {
+            // Update coin position
+            coin.y += coin.speed;
+
+            // Check collision with player
+            if (isCollision(player, coin)) {
+                score++;
+                resetCoin();
+            }
+
+            // Update obstacle position
+            obstacle.y += obstacle.speed;
+
+            // Check collision with player
+            if (isCollision(player, obstacle)) {
+                health--;
+                resetObstacle();
+                if (health <= 0) {
+                    endGame();
+                }
+            }
+
+            // Reset coin and obstacle if they go out of bounds
+            if (coin.y > canvas.height) {
+                resetCoin();
+            }
+
+            if (obstacle.y > canvas.height) {
+                resetObstacle();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw coin
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(coin.x, coin.y, coin.width, coin.height);
+
+            // Draw obstacle
+            ctx.fillStyle = 'red';
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+            // Display score and health
+            document.getElementById('score').textContent = score;
+            document.getElementById('health').textContent = health;
+
+            // Update health indicator color based on health value
+            if (health <= 1) {
+                document.getElementById('health').classList.add('red-indicator');
+            } else {
+                document.getElementById('health').classList.remove('red-indicator');
+            }
+        }
+
+        function movePlayer(event) {
+            player.x = event.clientX - canvas.offsetLeft - player.width / 2;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+        }
+
+        function resetCoin() {
+            coin.x = Math.random() * (canvas.width - coin.width);
+            coin.y = -coin.height;
+        }
+
+        function resetObstacle() {
+            obstacle.x = Math.random() * (canvas.width - obstacle.width);
+            obstacle.y = -obstacle.height;
+        }
+
+        function isCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+
+        function endGame() {
+            gameRunning = false;
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Arial';
+            ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
+            document.getElementById('gameStatus').textContent = 'Game Over - You Lost!';
+            document.getElementById('gameStatus').classList.add('game-over');
+        }
+
+        // Start game
+        initialize();
+    </script>
+</body>
+</html>
+
