@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .sudoku-board {
+        margin: 20px auto;
+        display: inline-block;
+        border-collapse: collapse;
+    }
+    .sudoku-board td {
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        border: 1px solid #999;
+        font-size: 1.2rem;
+    }
+    .sudoku-board .bold {
+        font-weight: bold;
+    }
+    .sudoku-board input {
+        width: 100%;
+        height: 100%;
+        border: none;
+        font-size: 1.2rem;
+        text-align: center;
+        background-color: #f0f0f0;
+    }
+    .sudoku-board input:disabled {
+        background-color: #ddd;
+    }
+    .sudoku-board input.error {
+        background-color: #ffb6b6;
+    }
+    .sudoku-board input.correct {
+        background-color: #b6ffb6;
+    }
+    button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+    <h1>Sudoku Game</h1>
+    <table class="sudoku-board" id="sudokuBoard">
+        <tbody>
+            <!-- Sudoku board will be generated dynamically -->
+        </tbody>
+    </table>
+    <br>
+    <button onclick="solveSudoku()">Solve</button>
+    <button onclick="resetBoard()">Reset</button>
+
+    <script>
+        // Sudoku puzzle - 0 represents empty cells
+        const puzzle = [
+            [5, 3, 0, 0, 7, 0, 0, 0, 0],
+            [6, 0, 0, 1, 9, 5, 0, 0, 0],
+            [0, 9, 8, 0, 0, 0, 0, 6, 0],
+            [8, 0, 0, 0, 6, 0, 0, 0, 3],
+            [4, 0, 0, 8, 0, 3, 0, 0, 1],
+            [7, 0, 0, 0, 2, 0, 0, 0, 6],
+            [0, 6, 0, 0, 0, 0, 2, 8, 0],
+            [0, 0, 0, 4, 1, 9, 0, 0, 5],
+            [0, 0, 0, 0, 8, 0, 0, 7, 9]
+        ];
+
+        // Initialize the board
+        const board = document.getElementById('sudokuBoard');
+        for (let i = 0; i < 9; i++) {
+            const row = document.createElement('tr');
+            for (let j = 0; j < 9; j++) {
+                const cell = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.setAttribute('pattern', '[1-9]');
+                input.setAttribute('data-row', i);
+                input.setAttribute('data-col', j);
+                input.addEventListener('input', validateInput);
+                cell.appendChild(input);
+                row.appendChild(cell);
+            }
+            board.querySelector('tbody').appendChild(row);
+        }
+
+        // Fill initial puzzle values
+        function initializeBoard() {
+            const cells = board.getElementsByTagName('input');
+            for (let i = 0; i < cells.length; i++) {
+                const row = parseInt(cells[i].getAttribute('data-row'));
+                const col = parseInt(cells[i].getAttribute('data-col'));
+                if (puzzle[row][col] !== 0) {
+                    cells[i].value = puzzle[row][col];
+                    cells[i].disabled = true;
+                    cells[i].classList.add('bold');
+                } else {
+                    cells[i].value = '';
+                    cells[i].disabled = false;
+                    cells[i].classList.remove('bold');
+                }
+                cells[i].classList.remove('error', 'correct');
+            }
+        }
+
+        // Reset the board to initial state
+        function resetBoard() {
+            const cells = board.getElementsByTagName('input');
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].value = '';
+                cells[i].disabled = false;
+                cells[i].classList.remove('bold', 'error', 'correct');
+            }
+        }
+
+        // Validate user input
+        function validateInput() {
+            const row = parseInt(this.getAttribute('data-row'));
+            const col = parseInt(this.getAttribute('data-col'));
+            const value = parseInt(this.value);
+
+            // Check if input is a number from 1 to 9
+            if (isNaN(value) || value < 1 || value > 9) {
+                this.classList.add('error');
+                return;
+            }
+
+            // Check if input conflicts with existing numbers in the same row, column, or 3x3 grid
+            const isValid = isValidPlacement(row, col, value);
+            if (isValid) {
+                this.classList.remove('error');
+                this.classList.add('correct');
+            } else {
+                this.classList.remove('correct');
+                this.classList.add('error');
+            }
+        }
+
+        // Check if a number can be placed at a given position
+        function isValidPlacement(row, col, value) {
+            // Check row
+            for (let i = 0; i < 9; i++) {
+                if (puzzle[row][i] === value && i !== col) {
+                    return false;
+                }
+            }
+
+            // Check column
+            for (let i = 0; i < 9; i++) {
+                if (puzzle[i][col] === value && i !== row) {
+                    return false;
+                }
+            }
+
+            // Check 3x3 grid
+            const gridRow = Math.floor(row / 3) * 3;
+            const gridCol = Math.floor(col / 3) * 3;
+            for (let i = gridRow; i < gridRow + 3; i++) {
+                for (let j = gridCol; j < gridCol + 3; j++) {
+                    if (puzzle[i][j] === value && (i !== row || j !== col)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Solve Sudoku using backtracking algorithm (for demonstration purposes)
+        function solveSudoku() {
+            const cells = board.getElementsByTagName('input');
+            const solved = solve(cells, 0);
+            if (solved) {
+                alert('Sudoku solved!');
+            } else {
+                alert('No solution exists for this Sudoku puzzle.');
+            }
+        }
+
+        function solve(cells, index) {
+            if (index === cells.length) {
+                return true; // Puzzle solved
+            }
+
+            const cell = cells[index];
+            const row = parseInt(cell.getAttribute('data-row'));
+            const col = parseInt(cell.getAttribute('data-col'));
+
+            if (puzzle[row][col] !== 0) {
+                return solve(cells, index + 1); // Skip filled cells
+            }
+
+            for (let num = 1; num <= 9; num++) {
+                if (isValidPlacement(row, col, num)) {
+                    puzzle[row][col] = num;
+                    cell.value = num;
+
+                    if (solve(cells, index + 1)) {
+                        return true;
+                    }
+
+                    // Backtrack
+                    puzzle[row][col] = 0;
+                    cell.value = '';
+                }
+            }
+
+            return false; // No valid number found
+        }
+
+        // Initialize the board on page load
+        initializeBoard();
+    </script>
+</body>
+</html>
