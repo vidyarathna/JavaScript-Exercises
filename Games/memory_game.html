@@ -1,0 +1,153 @@
+    <!-- Memory Game with Same Symbol -->
+    <!-- This game challenges you to match pairs of cards with the same symbol. -->
+    <!-- Click on any card to reveal its name temporarily. -->
+    <!-- Remember the location and name of each card to find matching pairs. -->
+    <!-- Match all pairs to win the game! -->
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Game with Same Symbol</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+    }
+    .memory-game {
+        width: 400px;
+        height: 400px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+    }
+    .card {
+        background-color: #3498db;
+        color: #fff;
+        font-size: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .card.flip {
+        background-color: #2ecc71;
+    }
+</style>
+</head>
+<body>
+    <div class="memory-game" id="memoryGame"></div>
+php
+Copy code
+<script>
+    const cardsArray = [
+        { id: 1, name: 'apple' },
+        { id: 2, name: 'banana' },
+        { id: 3, name: 'orange' },
+        { id: 4, name: 'grape' },
+        { id: 5, name: 'watermelon' },
+        { id: 6, name: 'cherry' },
+        { id: 7, name: 'peach' },
+        { id: 8, name: 'pear' }
+    ];
+
+    const gameGrid = cardsArray.concat(cardsArray).sort(() => 0.5 - Math.random());
+
+    let firstCard = null;
+    let secondCard = null;
+    let flippedCards = 0;
+
+    function createCard(card) {
+        const div = document.createElement('div');
+        div.classList.add('card');
+        div.dataset.name = card.name;
+        div.innerHTML = '&#127822;'; // Use the same Unicode symbol for all cards (example: 🍎)
+        div.addEventListener('click', flipCard);
+        return div;
+    }
+
+    function flipCard() {
+        if (this === firstCard) return;
+
+        this.innerHTML = this.dataset.name; // Show name text temporarily
+        setTimeout(() => {
+            if (!this.classList.contains('flip')) {
+                this.innerHTML = '&#127822;'; // Change back to symbol after 3 seconds
+            }
+        }, 3000);
+
+        this.classList.add('flip');
+
+        if (!firstCard) {
+            firstCard = this;
+            return;
+        }
+
+        secondCard = this;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        if (firstCard.dataset.name === secondCard.dataset.name) {
+            disableCards();
+        } else {
+            unflipCards();
+        }
+    }
+
+    function disableCards() {
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+        resetBoard();
+        flippedCards += 2;
+        if (flippedCards === gameGrid.length) {
+            alert('Congratulations! You found all matches!');
+            resetGame();
+        }
+    }
+
+    function unflipCards() {
+        setTimeout(() => {
+            firstCard.classList.remove('flip');
+            secondCard.classList.remove('flip');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        firstCard.innerHTML = '&#127822;'; // Reset to symbol
+        secondCard.innerHTML = '&#127822;'; // Reset to symbol
+        [firstCard, secondCard] = [null, null];
+    }
+
+    function resetGame() {
+        const gameContainer = document.getElementById('memoryGame');
+        gameContainer.innerHTML = '';
+        gameGrid.forEach(card => {
+            const newCard = createCard(card);
+            gameContainer.appendChild(newCard);
+        });
+        flippedCards = 0;
+    }
+
+    function initializeGame() {
+        const gameContainer = document.getElementById('memoryGame');
+        gameGrid.forEach(card => {
+            const newCard = createCard(card);
+            gameContainer.appendChild(newCard);
+        });
+    }
+
+    initializeGame();
+</script>
+</body>
+</html>
